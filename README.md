@@ -1,2 +1,2 @@
 # Focus
-A simple producitivity suite made for individuals with ADHD and neurotypicals alike.
+ A simple producitivity suite made for individuals with ADHD and neurotypicals alike.
