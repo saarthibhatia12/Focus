@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>focus.</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div class="title">focus.</div>
+        <div class="nav-links">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('chat') }}">Chat</a>
+            <a href="{{ url_for('email_route') }}">E-mail</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="greeting">{{ greeting }}, {{ username }}</div>
+        <div class="clock" id="clock"></div>
+
+        <!-- Task List Section -->
+        <div class="todo-container">
+            <h1>Task List</h1>
+            <ul id="todo-list">
+                {% for task in tasks %}
+                    <li data-index="{{ loop.index0 }}" class="{{ 'completed' if task.completed }}">
+                        {{ task.text }}
+                        <button class="toggle-btn" style="background-color: black; color: white; border-radius: 25px;">Complete Task</button>
+                    </li>
+                {% endfor %}
+            </ul>
+            <input type="text" id="todo-input" placeholder="Add a new task...">
+            <button id="add-btn">Add</button>
+        </div>
+
+        <!-- Pomodoro Timer Section -->
+        <div class="pomodoro-timer">
+            <h2>Pomodoro Timer</h2>
+            <div id="timer-display">25:00</div>
+            <div class="timer-controls">
+                <button id="start-timer">Start</button>
+                <button id="pause-timer" disabled>Pause</button>
+                <button id="reset-timer">Reset</button>
+            </div>
+            <div id="session-info">Work Session</div>
+        </div>
+
+        <!-- Quote Section -->
+        <div class="quote">{{ quote }}</div>
+    </div>
+
+    <!-- Include JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Pomodoro Timer Logic
+            let timerInterval;
+            let isPaused = false;
+            let currentSession = 'work'; // 'work', 'shortBreak', or 'longBreak'
+            let sessionCount = 0; // Number of completed work sessions
+            const durations = {
+                work: 25 * 60, // 25 minutes
+                shortBreak: 5 * 60, // 5 minutes
+                longBreak: 15 * 60 // 15 minutes
+            };
+            let remainingTime = durations.work;
+
+            const timerDisplay = document.getElementById('timer-display');
+            const sessionInfo = document.getElementById('session-info');
+            const startButton = document.getElementById('start-timer');
+            const pauseButton = document.getElementById('pause-timer');
+            const resetButton = document.getElementById('reset-timer');
+
+            function updateTimerDisplay() {
+                const minutes = Math.floor(remainingTime / 60).toString().padStart(2, '0');
+                const seconds = (remainingTime % 60).toString().padStart(2, '0');
+                timerDisplay.textContent = `${minutes}:${seconds}`;
+            }
+
+            function startTimer() {
+                if (isPaused) {
+                    isPaused = false;
+                    pauseButton.disabled = false;
+                    return;
+                }
+
+                startButton.disabled = true;
+                pauseButton.disabled = false;
+
+                timerInterval = setInterval(() => {
+                    if (remainingTime > 0) {
+                        remainingTime--;
+                        updateTimerDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        handleSessionEnd();
+                    }
+                }, 1000);
+            }
+
+            function pauseTimer() {
+                isPaused = true;
+                pauseButton.disabled = true;
+                clearInterval(timerInterval);
+            }
+
+            function resetTimer() {
+                clearInterval(timerInterval);
+                isPaused = false;
+                startButton.disabled = false;
+                pauseButton.disabled = true;
+                sessionCount = 0;
+                currentSession = 'work';
+                remainingTime = durations.work;
+                updateTimerDisplay();
+                sessionInfo.textContent = 'Work Session';
+            }
+
+            function handleSessionEnd() {
+                if (currentSession === 'work') {
+                    sessionCount++;
+                    currentSession = sessionCount % 4 === 0 ? 'longBreak' : 'shortBreak';
+                } else {
+                    currentSession = 'work';
+                }
+
+                remainingTime = durations[currentSession];
+                sessionInfo.textContent =
+                    currentSession === 'work'
+                        ? 'Work Session'
+                        : currentSession === 'shortBreak'
+                        ? 'Short Break'
+                        : 'Long Break';
+
+                startButton.disabled = false;
+                pauseButton.disabled = true;
+                updateTimerDisplay();
+            }
+
+            // Event Listeners
+            startButton.addEventListener('click', startTimer);
+            pauseButton.addEventListener('click', pauseTimer);
+            resetButton.addEventListener('click', resetTimer);
+
+            // Initialize the timer display
+            updateTimerDisplay();
+        });
+    </script>
+</body>
+</html>
